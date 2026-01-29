@@ -13,8 +13,8 @@ def scrape_facebook_marketplace():
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         
-        print(f"Acessando: {https://www.facebook.com/marketplace/profile/100000407050809/?locale=pt_BR}")
-        page.goto(https://www.facebook.com/marketplace/profile/100000407050809/?locale=pt_BR)
+        print(f"Acessando: {https://www.facebook.com/joaopaulomheinz/?locale=pt_BR}")
+        page.goto(https://www.facebook.com/joaopaulomheinz/?locale=pt_BR)
 
         # Espera o conteúdo carregar (o FB é pesado, vamos dar um tempo)
         page.wait_for_timeout(5000)
