@@ -1,0 +1,66 @@
+import json
+import time
+from playwright.sync_api import sync_playwright
+
+def scrape_facebook_marketplace():
+    # --- CONFIGURAÇÃO ---
+    # Coloque aqui a URL da aba 'Itens à venda' (Selling) do perfil do Facebook
+    PROFILE_URL = "https://www.facebook.com/marketplace/profile/100000407050809/?locale=pt_BR"
+    # --------------------
+
+    with sync_playwright() as p:
+        # Abre o navegador (headless=False permite que você veja o que está acontecendo)
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+        
+        print(f"Acessando: {https://www.facebook.com/marketplace/profile/100000407050809/?locale=pt_BR}")
+        page.goto(https://www.facebook.com/marketplace/profile/100000407050809/?locale=pt_BR)
+
+        # Espera o conteúdo carregar (o FB é pesado, vamos dar um tempo)
+        page.wait_for_timeout(5000)
+
+        # Scroll para garantir que os itens carreguem
+        page.mouse.wheel(0, 2000)
+        time.sleep(3)
+
+        imoveis = []
+
+        # Seletores do Marketplace (O FB muda as classes com frequência, 
+        # então usamos seletores baseados na estrutura de links e imagens)
+        items = page.query_selector_all('div[style="max-width:381px"]') # Seletor comum de card do FB
+
+        for item in items:
+            try:
+                # Extrai o Título e Preço (Geralmente são elementos de texto dentro do card)
+                text_content = item.inner_text().split('\n')
+                # O FB costuma colocar o preço na primeira ou segunda linha
+                preco = text_content[0] if 'R$' in text_content[0] else "Consulte"
+                titulo = text_content[1] if len(text_content) > 1 else "Imóvel Sem Título"
+
+                # Extrai o Link do Anúncio
+                link_element = item.query_selector('a')
+                href = link_element.get_attribute('href') if link_element else "#"
+                full_link = f"https://www.facebook.com{href}" if href.startswith('/') else href
+
+                # Extrai a Imagem
+                img_element = item.query_selector('img')
+                img_url = img_element.get_attribute('src') if img_element else ""
+
+                imoveis.append({
+                    "titulo": titulo,
+                    "preco": preco,
+                    "link": full_link,
+                    "imagem": img_url
+                })
+            except Exception as e:
+                print(f"Erro ao processar item: {e}")
+
+        # Salva em JSON para o Frontend ler
+        with open('imoveis.json', 'w', encoding='utf-8') as f:
+            json.dump(imoveis, f, ensure_ascii=False, indent=4)
+        
+        print(f"Sucesso! {len(imoveis)} imóveis foram salvos em imoveis.json.")
+        browser.close()
+
+if __name__ == "__main__":
+    scrape_facebook_marketplace()
